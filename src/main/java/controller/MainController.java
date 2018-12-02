@@ -17,7 +17,6 @@ import main.java.util.ClassLabelProducerUtil;
 import main.java.util.SparseVectorProducerUtil;
 
 import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import java.net.URL;
 import java.util.ResourceBundle;
 

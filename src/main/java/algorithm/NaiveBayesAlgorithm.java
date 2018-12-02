@@ -3,7 +3,6 @@ package main.java.algorithm;
 import main.java.base.SparkBase;
 import main.java.controller.MainController;
 import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.ml.classification.NaiveBayes;
 import org.apache.spark.ml.classification.NaiveBayesModel;
 import org.apache.spark.ml.evaluation.BinaryClassificationEvaluator;

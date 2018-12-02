@@ -12,7 +12,7 @@ public class Main extends Application {
     public void start(Stage primaryStage) throws Exception{
         Parent root = FXMLLoader.load(getClass().getResource("/main/java/ui/MainScreen.fxml"));
         primaryStage.setTitle("Adaptive Weather Research and Forecast Model Tracing Tool");
-        primaryStage.setScene(new Scene(root, 650, 500));
+        primaryStage.setScene(new Scene(root, 650, 520));
         primaryStage.setResizable(false);
         primaryStage.show();
     }
