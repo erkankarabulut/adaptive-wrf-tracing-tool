@@ -20,11 +20,26 @@ public class ClassLabelProducerUtil {
 
     public ClassLabelProducerUtil(){
         keywordList = new ArrayList<>();
+        checkIfFoldersExist();
         readKeywordList();
     }
 
-    public void produceBinaryLabels(String logFilePath, String featureFilePath, String filteredFilePath) {
-        String labeledFilePath = logFilePath + "_bl_" + new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date());
+    public void checkIfFoldersExist(){
+        String root = System.getProperty("user.dir") + "/data";
+        File file = new File(root + "/bl");
+        if(!file.exists()){
+            file.mkdir();
+        }
+
+        file = new File(root + "/mcl");
+        if(!file.exists()){
+            file.mkdir();
+        }
+    }
+
+    public String produceBinaryLabels(String logFilePath, String featureFilePath, String filteredFilePath, String logFileName) {
+        String labeledFilePath = System.getProperty("user.dir") + "/data/bl/" +
+                logFileName + "_bl_" + new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date());
 
         try {
             FileReader reader = new FileReader(logFilePath);
@@ -81,6 +96,8 @@ public class ClassLabelProducerUtil {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        return labeledFilePath;
     }
 
     public void readKeywordList() {
@@ -115,9 +132,9 @@ public class ClassLabelProducerUtil {
 
     }
 
-    public void produceMulticlassLabels(String logFilePath, String featureFilePath, String filteredFilePath) {
-        String outputFilePath = logFilePath + "_mcl_" + new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date());
-
+    public String produceMulticlassLabels(String logFilePath, String featureFilePath, String filteredFilePath, String logFileName) {
+        String outputFilePath = System.getProperty("user.dir") + "/data/mcl/" +
+                logFileName + "_mcl_" + new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date());
         try {
             FileReader reader = new FileReader(logFilePath);
             BufferedReader bufferedReader = new BufferedReader(reader);
@@ -237,6 +254,8 @@ public class ClassLabelProducerUtil {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        return outputFilePath;
     }
 
     private int getLabel(BufferedWriter bufferedWriter2, String element2, int label, int index2) throws IOException {

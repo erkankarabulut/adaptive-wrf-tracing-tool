@@ -7,24 +7,58 @@
 <?import java.lang.String?>
 <?import javafx.collections.FXCollections?>
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.control.Spinner?>
+
 <AnchorPane fx:controller="main.java.controller.MainController"
             xmlns:fx="http://javafx.com/fxml">
 
-    <Label layoutX="10.0" layoutY="10.0" prefHeight="21.0" prefWidth="279.0" text="Log File: " />
-    <Label layoutX="10.0" layoutY="50.0" prefHeight="21.0" prefWidth="279.0" text="Algorithm: " />
+    <ImageView fx:id="ytuLogo" fitHeight="100.0" fitWidth="100.0" layoutX="10.0" layoutY="10.0" pickOnBounds="true" preserveRatio="true">
+    </ImageView>
+    <Label layoutX="120" layoutY="50" text="Adaptive Weather Research and Forecast Model Tracing Tool">
+        <font>
+            <Font name="Times New Roman" size="20"/>
+        </font>
+    </Label>
 
-    <Button fx:id="chooseLogFileButton" layoutX="100.0" layoutY="10.0" prefWidth="180.0" mnemonicParsing="false" text="Select File" />
-    <Button fx:id="runButton" layoutX="10.0" layoutY="90.0" prefWidth="270" mnemonicParsing="false" text="Run" />
+    <Label layoutX="50.0" layoutY="150.0" prefHeight="21.0" prefWidth="279.0" text="Log File: " />
+    <Label layoutX="50.0" layoutY="190.0" prefHeight="21.0" prefWidth="279.0" text="Algorithm: " />
 
-    <ComboBox fx:id="selectAlgorithmComboBox" layoutX="100.0" layoutY="50.0" prefWidth="180.0" promptText="Choose Algorithm">
+    <Button fx:id="chooseLogFileButton" layoutX="150.0" layoutY="150.0" prefWidth="180.0" mnemonicParsing="false" text="Select File" />
+    <Button fx:id="runButton" layoutX="50.0" layoutY="270.0" prefWidth="280" mnemonicParsing="false" text="Run" />
+
+    <ComboBox fx:id="selectAlgorithmComboBox" layoutX="150.0" layoutY="190.0" prefWidth="180.0" promptText="Choose Algorithm">
         <items>
             <FXCollections fx:factory="observableArrayList">
-                <String fx:value="Logistic Regression" />
-                <String fx:value="Bayesian Linear Regression" />
+                <String fx:value="Logistic Regression With Binary Labels" />
+                <String fx:value="Logistic Regression With Multi Class Labels" />
+                <String fx:value="Naive Bayes With Binary Labels" />
+                <String fx:value="Naive Bayes With Multi Class Labels" />
                 <String fx:value="Least Absolute Deviation Regression" />
                 <String fx:value="Winnow Algorithm" />
+                <String fx:value="Support Vector Machine" />
             </FXCollections>
         </items>
     </ComboBox>
+
+    <Label fx:id="fileName" layoutX="350.0" layoutY="150.0" prefHeight="21.0" prefWidth="200.0" text="None" />
+    <Label fx:id="algorithmName" layoutX="350.0" layoutY="190.0" prefHeight="21.0" prefWidth="300.0" text="None" />
+
+    <Label layoutX="350" layoutY="230" text="Training(%):" />
+    <Label layoutX="480" layoutY="230" text="Test(%):" />
+
+    <Label fx:id="trainingDataRateLabel" layoutX="440" layoutY="230"  />
+    <Label fx:id="testDataRateLabel" layoutX="545" layoutY="230"  />
+
+    <Label fx:id="errorMessageLabel" layoutY="320" layoutX="50" />
+    <Label fx:id="resultLabel" layoutX="50" layoutY="350" >
+        <font>
+            <Font name="Times New Roman" size="16"/>
+        </font>
+    </Label>
+
+    <Label layoutX="50.0" layoutY="230.0" prefHeight="21.0" prefWidth="150.0" text="Test Data Percentage:" />
+    <Spinner fx:id="testRate" layoutX="260" layoutY="230" prefWidth="70" />
 
 </AnchorPane>

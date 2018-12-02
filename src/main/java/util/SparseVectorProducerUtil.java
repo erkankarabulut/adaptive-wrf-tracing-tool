@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import main.java.base.SparkBase;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.ml.feature.CountVectorizer;
@@ -14,59 +15,44 @@ import org.apache.spark.ml.linalg.SparseVector;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
-import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.types.*;
 
 public class SparseVectorProducerUtil {
 
-    public StructType schema;
-    public Dataset<Row> df;
-    public JavaSparkContext sc;
-
+    public SparkBase sparkBase;
     public Integer numOfVocab;
 
-    public SparkConf conf;
-
-    private transient SparkSession spark;
-
-    public SparseVectorProducerUtil(){
-        initialize();
+    public SparseVectorProducerUtil(SparkBase sparkBase){
+        checkIfFoldersExist();
+        this.numOfVocab = new Integer(0);
+        this.sparkBase  = sparkBase;
     }
 
-    public void initialize(){
-        conf = new SparkConf().setAppName("Linear Classifiers Examples")
-                .setMaster("local");
-
-        numOfVocab  = new Integer(0);
-        sc          = new JavaSparkContext(conf);
-        sc.setLogLevel("ERROR");
-        spark = SparkSession
-                .builder()
-                .appName("JavaCountVectorizerExample")
-                .getOrCreate();
-
-        schema = new StructType(new StructField[]{
-                new StructField("text", new ArrayType(DataTypes.StringType, true), false, Metadata.empty())
-        });
-
+    public void checkIfFoldersExist(){
+        String root = System.getProperty("user.dir") + "/data";
+        File file = new File(root + "/sv");
+        if(!file.exists()){
+            file.mkdir();
+        }
     }
 
-    public String produceSparseVector(String logFilePath) {
+    public String produceSparseVector(String logFilePath, String logFileName) {
         List<Row> data = addToVocabularyList(logFilePath);
-        String sparseVectorFilePath = logFilePath + "_sv_" + new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date());
+        String sparseVectorFilePath = System.getProperty("user.dir") + "/data/sv/" +
+                logFileName + "_sv_" + new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date());
+
 
         CountVectorizerModel cvModel;
 
-        df = spark.createDataFrame(data, schema);
+        sparkBase.setDf(sparkBase.getSpark().createDataFrame(data, sparkBase.getSchema()));
         cvModel = new CountVectorizer()
                 .setBinary(true)
                 .setInputCol("text")
                 .setOutputCol("feature")
                 .setVocabSize(numOfVocab)
                 .setMinDF(1)
-                .fit(df);
+                .fit(sparkBase.getDf());
 
-        Dataset<Row> ds = cvModel.transform(df);
+        Dataset<Row> ds = cvModel.transform(sparkBase.getDf());
         ds.show(false);
         List<Row> listr = ds.collectAsList();
 
@@ -93,7 +79,6 @@ public class SparseVectorProducerUtil {
             }
 
             bufferedWriter.close();
-            spark.stop();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -134,5 +119,4 @@ public class SparseVectorProducerUtil {
 
         return data;
     }
-
 }
