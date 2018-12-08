@@ -9,9 +9,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import main.java.algorithm.LogisticRegressionAlgorithm;
-import main.java.algorithm.NaiveBayesAlgorithm;
-import main.java.algorithm.SVMAlgorithm;
+import main.java.algorithm.*;
 import main.java.base.SparkBase;
 import main.java.util.ClassLabelProducerUtil;
 import main.java.util.SparseVectorProducerUtil;
@@ -30,6 +28,7 @@ public class MainController implements Initializable {
     @FXML ImageView ytuLogo;
 
     @FXML Spinner testRate;
+    @FXML Spinner iterationCount;
 
     @FXML Label fileName;
     @FXML Label algorithmName;
@@ -37,6 +36,7 @@ public class MainController implements Initializable {
     @FXML Label testDataRateLabel;
     @FXML Label resultLabel;
     @FXML Label errorMessageLabel;
+    @FXML Label iterationCountLabel;
 
     private String logFileName;
     private String logFilePath;
@@ -45,6 +45,8 @@ public class MainController implements Initializable {
     private Integer algorithmPointer;
     private Integer testDataRate;
     private Integer trainingDataRate;
+    private Integer iterationCountValue;
+    private Integer featureCount;
 
     private Double accuracy;
     private Double recall;
@@ -61,6 +63,7 @@ public class MainController implements Initializable {
         sparseVectorProducerUtil = new SparseVectorProducerUtil(sparkBase);
         testDataRate             = 20;
         trainingDataRate         = 80;
+        iterationCountValue      = 100;
 
         trainingDataRateLabel.setText(trainingDataRate.toString());
         testDataRateLabel.setText(testDataRate.toString());
@@ -69,6 +72,12 @@ public class MainController implements Initializable {
         ytuLogo.setImage(new Image(getClass().getResourceAsStream("../../resource/ytu.png")));
         testRate.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1,99));
         testRate.getValueFactory().setValue(new Integer(20));
+        testRate.setEditable(true);
+
+        iterationCount.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1,99999));
+        iterationCount.getValueFactory().setValue(new Integer(100));
+        iterationCountLabel.setText(new Integer(100).toString());
+        iterationCount.setEditable(true);
 
         chooseLogFileButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
@@ -98,11 +107,17 @@ public class MainController implements Initializable {
                 if(selectAlgorithmComboBox.getSelectionModel().getSelectedIndex() >= 0 && logFileName != null){
                     errorMessageLabel.setText("");
                     sparkBase.initializeResources();
+
+                    System.out.println("Creating sparse vector ...");
+
                     String sparseVectorFilePath         = sparseVectorProducerUtil.produceSparseVector(logFilePath, logFileName);
                     String fileWithBinaryLabelsPath     = classLabelProducerUtil.
                             produceBinaryLabels(logFilePath, sparseVectorFilePath, filteredLogFilePath, logFileName);
                     String fileWithMultiClassLabelsPath = classLabelProducerUtil.
                             produceMulticlassLabels(logFilePath, sparseVectorFilePath, filteredLogFilePath, logFileName);
+                    featureCount                        = sparseVectorProducerUtil.numOfVocab;
+
+                    System.out.println("Done!");
 
                     if(algorithmPointer == 0){       // Logistic Regression With Binary Labels
 
@@ -126,18 +141,35 @@ public class MainController implements Initializable {
                         NaiveBayesAlgorithm naiveBayesAlgorithm = new NaiveBayesAlgorithm(sparkBase);
                         naiveBayesAlgorithm.applyNaiveBayes(fileWithMultiClassLabelsPath, getInstance());
 
-                    }else if(algorithmPointer == 4){ // Least Absolute Deviation Regression
+                    }else if(algorithmPointer == 4){ // Random Forest With Binary Class Labels
 
-                    }else if(algorithmPointer == 5){ // Winnow Algorithm
+                        RandomForestAlgorithm randomForestAlgorithm = new RandomForestAlgorithm(sparkBase);
+                        randomForestAlgorithm.applyRandomForest(fileWithBinaryLabelsPath, getInstance(), 2);
+                        // 2 category for if row contains provenance info or not
 
-                    }else if(algorithmPointer == 6){ // SVM Algorithm
-                        SVMAlgorithm svmAlgorithm = new SVMAlgorithm(sparkBase);
-                        svmAlgorithm.applySVMAlgorithm(fileWithBinaryLabelsPath, getTestDataRate(), getTrainingDataRate());
+                    }else if(algorithmPointer == 5){ // Random Forest With Multi Class Labels
+
+                        RandomForestAlgorithm randomForestAlgorithm = new RandomForestAlgorithm(sparkBase);
+                        randomForestAlgorithm.applyRandomForest(fileWithMultiClassLabelsPath, getInstance(), 4);
+                        // 4 category for communication, derivation, generation and usage
+
+                    }else if(algorithmPointer == 6){ // Multilayer Perceptron Classifier With Binary Labels
+
+                        MultilayerPerceptronClassifierAlgorithm perceptronClassifierAlgorithm = new MultilayerPerceptronClassifierAlgorithm(sparkBase);
+                        perceptronClassifierAlgorithm.applyMultilayerPerceptronClassifier(fileWithBinaryLabelsPath, getInstance(), featureCount, 2);
+                        // 2 class for if row contains provenance info or not
+
+                    }else if(algorithmPointer == 8){ // Multilayer Perceptron Classifier With Multi Class Labels
+
+                        MultilayerPerceptronClassifierAlgorithm perceptronClassifierAlgorithm = new MultilayerPerceptronClassifierAlgorithm(sparkBase);
+                        perceptronClassifierAlgorithm.applyMultilayerPerceptronClassifier(fileWithBinaryLabelsPath, getInstance(), featureCount, 4);
+                        // 4 class for communication, derivation, generation and usage
+
                     }
 
-                    String resultString = "Results:\nAlgorithm: " + selectAlgorithmComboBox.getSelectionModel().getSelectedItem().toString() +
+                    String resultString = "Results:\n\nAlgorithm: " + selectAlgorithmComboBox.getSelectionModel().getSelectedItem().toString() +
                             "\nTest Data Rate: " + getTestDataRate() + "\nTraining Data Rate: " + getTrainingDataRate() +
-                            "\nAccuracy: " + getAccuracy() + "\nPrecision: " + precision + "\nRecall: " + getRecall();
+                            "\nIteration Count: " + iterationCountValue + "\nAccuracy: " + getAccuracy() + "\nPrecision: " + precision + "\nRecall: " + getRecall();
                     resultLabel.setText(resultString);
                     System.out.println(resultString);
 
@@ -157,6 +189,14 @@ public class MainController implements Initializable {
 
                 trainingDataRateLabel.setText(getTrainingDataRate().toString());
                 testDataRateLabel.setText(getTestDataRate().toString());
+            }
+        });
+
+        iterationCount.getValueFactory().valueProperty().addListener(new ChangeListener() {
+            @Override
+            public void changed(ObservableValue observableValue, Object o, Object t1) {
+                setIterationCountValue(Integer.parseInt(t1.toString()));
+                iterationCountLabel.setText(t1.toString());
             }
         });
     }
@@ -203,5 +243,13 @@ public class MainController implements Initializable {
 
     public void setPrecision(Double precision) {
         this.precision = precision;
+    }
+
+    public Integer getIterationCountValue() {
+        return iterationCountValue;
+    }
+
+    public void setIterationCountValue(Integer iterationCountValue) {
+        this.iterationCountValue = iterationCountValue;
     }
 }

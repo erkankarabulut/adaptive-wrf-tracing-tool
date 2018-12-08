@@ -105,8 +105,11 @@ public class SparseVectorProducerUtil {
                     if (words[i].contains(":")) {
                         words[i] = words[i].replace(":", "");
                     }
-                    vocabList.add(words[i]);
-                    numOfVocab++;
+
+                    if(!vocabList.contains(words[i])){
+                        vocabList.add(words[i]);
+                        numOfVocab++;
+                    }
                 }
                 data.add(RowFactory.create((Object) words));
             }

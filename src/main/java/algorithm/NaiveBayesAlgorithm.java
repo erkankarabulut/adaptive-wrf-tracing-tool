@@ -19,6 +19,10 @@ public class NaiveBayesAlgorithm {
     }
 
     public void applyNaiveBayes(String svFilePath, MainController mainController){
+        Double accuracySum = new Double(0);
+        Double precisionSum = new Double(0);
+        Double recallSum = new Double(0);
+
         Dataset<Row> dataFrame =
                 sparkBase.getSpark().read().format("libsvm").load(svFilePath);
         Dataset<Row>[] splits = dataFrame.randomSplit(new double[]
@@ -26,26 +30,33 @@ public class NaiveBayesAlgorithm {
         Dataset<Row> train = splits[0];
         Dataset<Row> test = splits[1];
 
-        NaiveBayes nb = new NaiveBayes();
+        for(int i=0; i< mainController.getIterationCountValue(); i++){
+            NaiveBayes nb = new NaiveBayes();
+            NaiveBayesModel model = nb.fit(train);
 
-        NaiveBayesModel model = nb.fit(train);
+            Dataset<Row> predictions = model.transform(test);
+            predictions.show();
 
-        Dataset<Row> predictions = model.transform(test);
-        predictions.show();
+            MulticlassClassificationEvaluator evaluator = new MulticlassClassificationEvaluator()
+                    .setLabelCol("label")
+                    .setPredictionCol("prediction")
+                    .setMetricName("weightedPrecision");
 
-        MulticlassClassificationEvaluator evaluator = new MulticlassClassificationEvaluator()
-                .setLabelCol("label")
-                .setPredictionCol("prediction")
-                .setMetricName("weightedPrecision");
+            precisionSum += (evaluator.evaluate(predictions));
 
-        mainController.setPrecision(evaluator.evaluate(predictions));
+            evaluator.setMetricName("weightedRecall");
+            recallSum += (evaluator.evaluate(predictions));
 
-        evaluator.setMetricName("weightedRecall");
-        mainController.setRecall(evaluator.evaluate(predictions));
+            evaluator.setMetricName("accuracy");
+            accuracySum += (evaluator.evaluate(predictions));
 
-        evaluator.setMetricName("accuracy");
-        mainController.setAccuracy(evaluator.evaluate(predictions));
+            System.out.println("Iteration count: " + (i+1));
+        }
 
+        System.out.println("Done!\n");
+        mainController.setAccuracy(accuracySum / mainController.getIterationCountValue());
+        mainController.setPrecision(precisionSum / mainController.getIterationCountValue());
+        mainController.setRecall(recallSum / mainController.getIterationCountValue());
     }
 
 
