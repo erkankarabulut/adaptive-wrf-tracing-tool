@@ -26,35 +26,33 @@ public class MultilayerPerceptronClassifierAlgorithm {
         Dataset<Row> dataFrame =
                 sparkBase.getSpark().read().format("libsvm").load(svFilePath);
 
-        for(int i=0; i< mainController.getIterationCountValue(); i++){
-            Dataset<Row>[] splits = dataFrame.randomSplit(new double[]
-                    {mainController.getTrainingDataRate(), mainController.getTestDataRate()}, 1234L);
-            Dataset<Row> train = splits[0];
-            Dataset<Row> test = splits[1];
+        Dataset<Row>[] splits = dataFrame.randomSplit(new double[]
+                {mainController.getTrainingDataRate(), mainController.getTestDataRate()}, 1234L);
+        Dataset<Row> train = splits[0];
+        Dataset<Row> test = splits[1];
 
-            MultilayerPerceptronClassifier trainer = new MultilayerPerceptronClassifier()
-                    .setLayers(layers)
-                    .setBlockSize(128)
-                    .setSeed(1234L)
-                    .setMaxIter(100);
+        MultilayerPerceptronClassifier trainer = new MultilayerPerceptronClassifier()
+                .setLayers(layers)
+                .setBlockSize(128)
+                .setSeed(1234L)
+                .setMaxIter(100);
 
-            MultilayerPerceptronClassificationModel model = trainer.fit(train);
+        MultilayerPerceptronClassificationModel model = trainer.fit(train);
 
-            Dataset<Row> result = model.transform(test);
-            Dataset<Row> predictions = result.select("prediction", "label");
-            MulticlassClassificationEvaluator evaluator = new MulticlassClassificationEvaluator()
-                    .setMetricName("weightedPrecision");
+        Dataset<Row> result = model.transform(test);
+        Dataset<Row> predictions = result.select("prediction", "label");
+        MulticlassClassificationEvaluator evaluator = new MulticlassClassificationEvaluator()
+                .setMetricName("weightedPrecision");
 
-            precisionSum += (evaluator.evaluate(predictions));
+        precisionSum += (evaluator.evaluate(predictions));
 
-            evaluator.setMetricName("weightedRecall");
-            recallSum += (evaluator.evaluate(predictions));
+        evaluator.setMetricName("weightedRecall");
+        recallSum += (evaluator.evaluate(predictions));
 
-            evaluator.setMetricName("accuracy");
-            accuracySum += (evaluator.evaluate(predictions));
+        evaluator.setMetricName("accuracy");
+        accuracySum += (evaluator.evaluate(predictions));
 
-            System.out.println("Iteration count: " + (i+1));
-        }
+        System.out.println("Iteration count: " + (1));
 
         System.out.println("Done!\n");
         mainController.setAccuracy(accuracySum / mainController.getIterationCountValue());

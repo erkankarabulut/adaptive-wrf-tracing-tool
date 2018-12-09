@@ -53,7 +53,6 @@ public class SparseVectorProducerUtil {
                 .fit(sparkBase.getDf());
 
         Dataset<Row> ds = cvModel.transform(sparkBase.getDf());
-        ds.show(false);
         List<Row> listr = ds.collectAsList();
 
         try {

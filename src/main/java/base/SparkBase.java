@@ -18,19 +18,25 @@ public class SparkBase {
     private transient SparkSession spark;
 
     public void initializeResources(){
-        conf = new SparkConf().setAppName("Linear Classifiers Examples")
-                .setMaster("local");
+        try{
+            conf = new SparkConf().setAppName("Linear Classifiers Examples")
+                    .setMaster("local");
 
-        sc   = new JavaSparkContext(conf);
-        sc.setLogLevel("ERROR");
-        spark = SparkSession
-                .builder()
-                .appName("Sparse Vector Producer")
-                .getOrCreate();
+            sc   = new JavaSparkContext(conf);
+            sc.setLogLevel("ERROR");
+            spark = SparkSession
+                    .builder()
+                    .appName("Sparse Vector Producer")
+                    .getOrCreate();
 
-        schema = new StructType(new StructField[]{
-                new StructField("text", new ArrayType(DataTypes.StringType, true), false, Metadata.empty())
-        });
+            schema = new StructType(new StructField[]{
+                    new StructField("text", new ArrayType(DataTypes.StringType, true), false, Metadata.empty())
+            });
+        }catch (Exception e){
+            cleanResources();
+            initializeResources();
+            e.printStackTrace();
+        }
     }
 
     public void cleanResources(){

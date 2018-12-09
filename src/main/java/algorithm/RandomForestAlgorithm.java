@@ -49,7 +49,6 @@ public class RandomForestAlgorithm {
                     .setLabelCol("indexedLabel")
                     .setFeaturesCol("indexedFeatures");
 
-            System.out.println("Num of tree: " + rf.getNumTrees());
             IndexToString labelConverter = new IndexToString()
                     .setInputCol("prediction")
                     .setOutputCol("predictedLabel")
@@ -73,7 +72,7 @@ public class RandomForestAlgorithm {
             evaluator.setMetricName("weightedPrecision");
             precisionSum += (evaluator.evaluate(predictions));
 
-            System.out.println("Iteration count: " + (i+1) + " - " + accuracySum + " - " + precisionSum + " - " + recallSum);
+            System.out.println("Iteration count: " + (i+1));
         }
 
         System.out.println("Done!\n");

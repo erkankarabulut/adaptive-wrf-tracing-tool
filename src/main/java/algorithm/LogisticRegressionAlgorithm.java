@@ -67,10 +67,6 @@ public class LogisticRegressionAlgorithm {
         mainController.setRecall(recallSum / mainController.getIterationCountValue());
     }
 
-    public String getLrFamily() {
-        return lrFamily;
-    }
-
     public void setLrFamily(String lrFamily) {
         this.lrFamily = lrFamily;
     }

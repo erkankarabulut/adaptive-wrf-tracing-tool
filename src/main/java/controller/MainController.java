@@ -40,6 +40,9 @@ public class MainController implements Initializable {
 
     private String logFileName;
     private String logFilePath;
+    private String fileWithBinaryLabelsPath;
+    private String sparseVectorFilePath;
+    private String fileWithMultiClassLabelsPath;
     private static final String filteredLogFilePath = System.getProperty("user.dir") + "/data/filtered_log_file";
 
     private Integer algorithmPointer;
@@ -51,6 +54,8 @@ public class MainController implements Initializable {
     private Double accuracy;
     private Double recall;
     private Double precision;
+
+    private Boolean doesDataCreated;
 
     public ClassLabelProducerUtil classLabelProducerUtil;
     public SparseVectorProducerUtil sparseVectorProducerUtil;
@@ -64,6 +69,7 @@ public class MainController implements Initializable {
         testDataRate             = 20;
         trainingDataRate         = 80;
         iterationCountValue      = 100;
+        doesDataCreated          = false;
 
         trainingDataRateLabel.setText(trainingDataRate.toString());
         testDataRateLabel.setText(testDataRate.toString());
@@ -89,6 +95,8 @@ public class MainController implements Initializable {
 
                     fileName.setText(logFileName);
                 }
+
+                doesDataCreated = false;
             }
         });
 
@@ -108,16 +116,20 @@ public class MainController implements Initializable {
                     errorMessageLabel.setText("");
                     sparkBase.initializeResources();
 
-                    System.out.println("Creating sparse vector ...");
+                    if(!doesDataCreated){
+                        System.out.println("Creating sparse vector ...");
+                        sparseVectorFilePath         = sparseVectorProducerUtil.produceSparseVector(logFilePath, logFileName);
+                        fileWithBinaryLabelsPath     = classLabelProducerUtil.
+                                produceBinaryLabels(logFilePath, sparseVectorFilePath, filteredLogFilePath, logFileName);
+                        fileWithMultiClassLabelsPath = classLabelProducerUtil.
+                                produceMulticlassLabels(logFilePath, sparseVectorFilePath, filteredLogFilePath, logFileName);
+                        featureCount                        = sparseVectorProducerUtil.numOfVocab;
 
-                    String sparseVectorFilePath         = sparseVectorProducerUtil.produceSparseVector(logFilePath, logFileName);
-                    String fileWithBinaryLabelsPath     = classLabelProducerUtil.
-                            produceBinaryLabels(logFilePath, sparseVectorFilePath, filteredLogFilePath, logFileName);
-                    String fileWithMultiClassLabelsPath = classLabelProducerUtil.
-                            produceMulticlassLabels(logFilePath, sparseVectorFilePath, filteredLogFilePath, logFileName);
-                    featureCount                        = sparseVectorProducerUtil.numOfVocab;
-
-                    System.out.println("Done!");
+                        System.out.println("Done!");
+                        doesDataCreated = true;
+                    }else {
+                        System.out.println("Sparse vector was created before, skipping this part ...");
+                    }
 
                     if(algorithmPointer == 0){       // Logistic Regression With Binary Labels
 
@@ -159,7 +171,7 @@ public class MainController implements Initializable {
                         perceptronClassifierAlgorithm.applyMultilayerPerceptronClassifier(fileWithBinaryLabelsPath, getInstance(), featureCount, 2);
                         // 2 class for if row contains provenance info or not
 
-                    }else if(algorithmPointer == 8){ // Multilayer Perceptron Classifier With Multi Class Labels
+                    }else if(algorithmPointer == 7){ // Multilayer Perceptron Classifier With Multi Class Labels
 
                         MultilayerPerceptronClassifierAlgorithm perceptronClassifierAlgorithm = new MultilayerPerceptronClassifierAlgorithm(sparkBase);
                         perceptronClassifierAlgorithm.applyMultilayerPerceptronClassifier(fileWithBinaryLabelsPath, getInstance(), featureCount, 4);
@@ -251,5 +263,29 @@ public class MainController implements Initializable {
 
     public void setIterationCountValue(Integer iterationCountValue) {
         this.iterationCountValue = iterationCountValue;
+    }
+
+    public String getFileWithBinaryLabelsPath() {
+        return fileWithBinaryLabelsPath;
+    }
+
+    public void setFileWithBinaryLabelsPath(String fileWithBinaryLabelsPath) {
+        this.fileWithBinaryLabelsPath = fileWithBinaryLabelsPath;
+    }
+
+    public String getSparseVectorFilePath() {
+        return sparseVectorFilePath;
+    }
+
+    public void setSparseVectorFilePath(String sparseVectorFilePath) {
+        this.sparseVectorFilePath = sparseVectorFilePath;
+    }
+
+    public String getFileWithMultiClassLabelsPath() {
+        return fileWithMultiClassLabelsPath;
+    }
+
+    public void setFileWithMultiClassLabelsPath(String fileWithMultiClassLabelsPath) {
+        this.fileWithMultiClassLabelsPath = fileWithMultiClassLabelsPath;
     }
 }

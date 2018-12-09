@@ -25,17 +25,17 @@ public class NaiveBayesAlgorithm {
 
         Dataset<Row> dataFrame =
                 sparkBase.getSpark().read().format("libsvm").load(svFilePath);
-        Dataset<Row>[] splits = dataFrame.randomSplit(new double[]
-                {mainController.getTrainingDataRate(), mainController.getTestDataRate()}, 1234L);
-        Dataset<Row> train = splits[0];
-        Dataset<Row> test = splits[1];
 
         for(int i=0; i< mainController.getIterationCountValue(); i++){
+            Dataset<Row>[] splits = dataFrame.randomSplit(new double[]
+                    {mainController.getTrainingDataRate(), mainController.getTestDataRate()}, 1234L);
+            Dataset<Row> train = splits[0];
+            Dataset<Row> test = splits[1];
+
             NaiveBayes nb = new NaiveBayes();
             NaiveBayesModel model = nb.fit(train);
 
             Dataset<Row> predictions = model.transform(test);
-            predictions.show();
 
             MulticlassClassificationEvaluator evaluator = new MulticlassClassificationEvaluator()
                     .setLabelCol("label")
