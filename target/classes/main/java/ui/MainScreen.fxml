@@ -39,6 +39,8 @@
                 <String fx:value="Random Forest With Multi Class Labels" />
                 <String fx:value="Multilayer Perceptron Classifier With Binary Labels" />
                 <String fx:value="Multilayer Perceptron Classifier With Multi Class Labels" />
+                <String fx:value="Manually Implemented Naive Bayes With Binary Class Labels" />
+                <String fx:value="Manually Implemented Naive Bayes With Multi-Class Class Labels" />
             </FXCollections>
         </items>
     </ComboBox>

@@ -177,6 +177,13 @@ public class MainController implements Initializable {
                         perceptronClassifierAlgorithm.applyMultilayerPerceptronClassifier(fileWithBinaryLabelsPath, getInstance(), featureCount, 4);
                         // 4 class for communication, derivation, generation and usage
 
+                    }else if(algorithmPointer == 8){ // Manual Naive Bayes Algorithm with Binary Class Labeled
+
+                        NaiveBayesManual naiveBayesManual = new NaiveBayesManual();
+                        naiveBayesManual.applyNaiveBayesAlgorithmForBinaryClassLabels(getInstance(), fileWithBinaryLabelsPath);
+
+                    }else if(algorithmPointer == 9){ // Manual Naive Bayes Algorithm with Multi-Class Class Labeled
+
                     }
 
                     String resultString = "Results:\n\nAlgorithm: " + selectAlgorithmComboBox.getSelectionModel().getSelectedItem().toString() +

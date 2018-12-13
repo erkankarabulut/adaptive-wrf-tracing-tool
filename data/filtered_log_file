@@ -43,6 +43,7 @@ Communication integrate med_latbound_in
 Usage med_latbound_in wrfbdy_d01
 Communication med_latbound_in input_boundary
 Communication integrate med_hist_out
+Communication integrate med_hist_out
 Communication wrf integrate
 Communication med_shutdown_io ext_gr1_ioexit
 Communication wrf med_shutdown_io

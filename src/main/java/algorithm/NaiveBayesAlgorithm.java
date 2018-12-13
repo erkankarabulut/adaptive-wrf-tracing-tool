@@ -28,7 +28,7 @@ public class NaiveBayesAlgorithm {
 
         for(int i=0; i< mainController.getIterationCountValue(); i++){
             Dataset<Row>[] splits = dataFrame.randomSplit(new double[]
-                    {mainController.getTrainingDataRate(), mainController.getTestDataRate()}, 1234L);
+                    {mainController.getTrainingDataRate(), mainController.getTestDataRate()});
             Dataset<Row> train = splits[0];
             Dataset<Row> test = splits[1];
 
