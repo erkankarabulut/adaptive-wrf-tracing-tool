@@ -184,6 +184,9 @@ public class MainController implements Initializable {
 
                     }else if(algorithmPointer == 9){ // Manual Naive Bayes Algorithm with Multi-Class Class Labeled
 
+                        NaiveBayesManual naiveBayesManual = new NaiveBayesManual();
+                        naiveBayesManual.applyNaiveBayesAlgorithmForBinaryClassLabels(getInstance(), fileWithMultiClassLabelsPath);
+
                     }
 
                     String resultString = "Results:\n\nAlgorithm: " + selectAlgorithmComboBox.getSelectionModel().getSelectedItem().toString() +

@@ -4,9 +4,7 @@ import main.java.base.Line;
 import main.java.controller.MainController;
 import main.java.util.MathUtil;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class NaiveBayesManual extends BaseAlgorithm{
 
@@ -23,9 +21,7 @@ public class NaiveBayesManual extends BaseAlgorithm{
         Double recall    = new Double(0);
 
         ArrayList<Line> dataSet = readSparseVector(filePath);
-        ArrayList<Double> classLabelRates = findClassLabelRates(dataSet);
-        Double zeroRate = classLabelRates.get(0);
-        Double oneRate  = classLabelRates.get(1);
+        HashMap<Integer, Double> classLabelRates = findClassLabelRates(dataSet);
 
         for(int i=0; i<controller.getIterationCountValue(); i++){
             Integer tp = new Integer(0);
@@ -33,43 +29,53 @@ public class NaiveBayesManual extends BaseAlgorithm{
             Integer tn = new Integer(0);
             Integer fn = new Integer(0);
 
-            ArrayList<ArrayList<Line>> splittedDataset  = splitDateset(dataSet, controller.getTrainingDataRate(), controller.getTestDataRate());
-            ArrayList<Line> training                    = splittedDataset.get(0);
-            ArrayList<Line> test                        = splittedDataset.get(1);
-
-            for(Line line : test){
-                Double zeroProbability = new Double(1);
-                Double oneProbability  = new Double(1);
-
-                for(int k=0; k<line.getWordList().size(); k++){
-                    zeroProbability *= findAttributeProbability(training, line.getWordList().get(k), 0);
-                }
-                zeroProbability *= zeroRate;
-
-                for(int k=0; k<line.getWordList().size(); k++){
-                    oneProbability *= findAttributeProbability(training, line.getWordList().get(k), 1);
-                }
-                oneProbability *= oneRate;
-
-                if(line.getClassLabel() == 0){
-                    if(oneProbability > zeroProbability){
-                        fp++;
-                    }else {
-                        tn++;
-                    }
-                }else {
-                    if(oneProbability > zeroProbability){
-                        tp++;
-                    }else {
-                        fn++;
-                    }
+            ArrayList<ArrayList<Line>> splittedDataset          = splitDateset(dataSet, controller.getTrainingDataRate(), controller.getTestDataRate());
+            ArrayList<Line> training                            = splittedDataset.get(0);
+            ArrayList<Line> test                                = splittedDataset.get(1);
+            ArrayList<ArrayList<Integer>> classConfusionMatrix  = new ArrayList<>();
+            for(int k=0; k<classLabelRates.size(); k++){
+                classConfusionMatrix.add(k, new ArrayList<Integer>());
+                for(int m=0; m<classLabelRates.size(); m++){
+                    classConfusionMatrix.get(k).add(new Integer(0));
                 }
             }
 
-            accuracy    += ((tp.doubleValue() + tn.doubleValue()) / ((tp.doubleValue() + fp.doubleValue() + fn.doubleValue() + tn.doubleValue())
-                    == 0 ? 1 : (tp.doubleValue() + fp.doubleValue() + fn.doubleValue() + tn.doubleValue())));
-            precision   += (tp.doubleValue()/((tp.doubleValue() + fp.doubleValue()) == 0 ? 1 : tp.doubleValue() + fp.doubleValue()));
-            recall      += (tp.doubleValue()/((tp.doubleValue() + fn.doubleValue()) == 0 ? 1 : (tp.doubleValue() + fn.doubleValue())));
+            for(Line line : test){
+                Double maxProbability       = new Double(0);
+                Double currentProbability   = new Double(1);
+
+                Set<Integer> classes    = classLabelRates.keySet();
+                Integer predictedClass  = -1;
+                for(Integer classValue : classes){
+                    for(int l=0; l<line.getWordList().size(); l++){
+                        currentProbability *= findAttributeProbability(training, line.getWordList().get(l), classValue);
+                    }
+
+                    currentProbability *= classLabelRates.get(classValue);
+                    if(currentProbability >= maxProbability){
+                        maxProbability = currentProbability;
+                        predictedClass = classValue;
+                    }
+                }
+
+                classConfusionMatrix.get(findIndex(line.getClassLabel(), classes)).set(findIndex(predictedClass, classes),
+                        (classConfusionMatrix.get(findIndex(line.getClassLabel(), classes)).get(findIndex(predictedClass, classes)) + 1));
+            }
+
+            for(int k=0; k<classConfusionMatrix.size(); k++){
+                tp = classConfusionMatrix.get(k).get(k);
+                fn = sumAll(classConfusionMatrix.get(k)) - classConfusionMatrix.get(k).get(k);
+                tn = test.size() - sumAll(classConfusionMatrix.get(k));
+                fp = getColumnSum(classConfusionMatrix, k) - classConfusionMatrix.get(k).get(k);
+
+                accuracy    += (((tp.doubleValue() + tn.doubleValue()) /
+                        (tp.doubleValue() + fp.doubleValue() + fn.doubleValue() + tn.doubleValue()))
+                        * (sumAll(classConfusionMatrix.get(k))) / test.size());
+                precision   += ((tp.doubleValue()/((tp.doubleValue() + fp.doubleValue()) == 0 ? 1 : tp.doubleValue() + fp.doubleValue()))
+                        * (sumAll(classConfusionMatrix.get(k))) / test.size());
+                recall      += ((tp.doubleValue()/((tp.doubleValue() + fn.doubleValue()) == 0 ? 1 : (tp.doubleValue() + fn.doubleValue()))
+                        * (sumAll(classConfusionMatrix.get(k))) / test.size()));
+            }
         }
 
         accuracy  /= controller.getIterationCountValue();
@@ -79,6 +85,37 @@ public class NaiveBayesManual extends BaseAlgorithm{
         controller.setAccuracy(accuracy);
         controller.setPrecision(precision);
         controller.setRecall(recall);
+    }
+
+    public Integer findIndex(Integer classValue, Set<Integer> classList){
+        Integer index = new Integer(0);
+        for(Integer temp : classList){
+            if(classValue == temp){
+                break;
+            }
+
+            index++;
+        }
+
+        return index;
+    }
+
+    public Integer getColumnSum(ArrayList<ArrayList<Integer>> matrix, Integer columnPointer){
+        Integer result = new Integer(0);
+        for(ArrayList<Integer> column :matrix){
+            result += column.get(columnPointer);
+        }
+
+        return result;
+    }
+
+    public Integer sumAll(ArrayList<Integer> list){
+        Integer result = new Integer(0);
+        for(Integer temp : list){
+            result += temp;
+        }
+
+        return result;
     }
 
     public Double findAttributeProbability(ArrayList<Line> training, Integer attributeValue, Integer classLabel){
@@ -126,18 +163,29 @@ public class NaiveBayesManual extends BaseAlgorithm{
         return splittedDataset;
     }
 
-    public ArrayList<Double> findClassLabelRates(ArrayList<Line> dataset){
-        ArrayList<Double> classLabelRates = new ArrayList<>();
-        Integer zeroCount = new Integer(0);
+    public HashMap<Integer, Double> findClassLabelRates(ArrayList<Line> dataset){
+        HashMap<Integer, Double> classLabelRates = new HashMap<>();
+        ArrayList<Integer> differentClassLabels  = findDifferentClassLabels(dataset);
+        for(Integer classLabel : differentClassLabels){
+            classLabelRates.put(classLabel, new Double(0));
+        }
 
         for (Line line : dataset){
-            if(line.getClassLabel() == 0){
-                zeroCount++;
+            classLabelRates.put(line.getClassLabel(), ((classLabelRates.get(line.getClassLabel()) + new Double(1)) / dataset.size()));
+        }
+
+        return classLabelRates;
+    }
+
+    public ArrayList<Integer> findDifferentClassLabels(ArrayList<Line> dataset){
+        ArrayList<Integer> differentClassLabels = new ArrayList<>();
+
+        for(Line line : dataset){
+            if(!differentClassLabels.contains(line.getClassLabel())){
+                differentClassLabels.add(line.getClassLabel());
             }
         }
 
-        classLabelRates.add(zeroCount.doubleValue()/dataset.size());
-        classLabelRates.add((dataset.size() - zeroCount.doubleValue()) / dataset.size());
-        return classLabelRates;
+        return differentClassLabels;
     }
 }
