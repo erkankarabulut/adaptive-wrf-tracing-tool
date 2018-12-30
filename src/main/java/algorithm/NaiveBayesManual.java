@@ -1,6 +1,6 @@
 package main.java.algorithm;
 
-import main.java.base.Line;
+import main.java.bean.Line;
 import main.java.controller.MainController;
 import main.java.util.MathUtil;
 
@@ -22,7 +22,7 @@ public class NaiveBayesManual extends BaseAlgorithm{
 
         ArrayList<Line> dataSet = readSparseVector(filePath);
         HashMap<Integer, Double> classLabelRates = findClassLabelRates(dataSet);
-
+        System.out.println(classLabelRates.toString());
         for(int i=0; i<controller.getIterationCountValue(); i++){
             Integer tp = new Integer(0);
             Integer fp = new Integer(0);
@@ -132,35 +132,6 @@ public class NaiveBayesManual extends BaseAlgorithm{
         }
 
         return (similarCount.doubleValue() / totalCount.doubleValue());
-    }
-
-    public ArrayList<ArrayList<Line>> splitDateset(ArrayList<Line> dataset, Integer trainingRate, Integer testRate){
-        ArrayList<ArrayList<Line>> splittedDataset  = new ArrayList<>();
-        ArrayList<Line> trainingSet                 = new ArrayList<>();
-        ArrayList<Line> testSet                     = new ArrayList<>();
-        ArrayList<Integer> choosenLines             = new ArrayList<>();
-        Random random                               = new Random();
-        Integer trainingDatasetSize                 = ((Double) (dataset.size() * (trainingRate.doubleValue() / 100))).intValue();
-
-        for(int i=0; i<trainingDatasetSize; i++){
-            Integer linePointer = random.nextInt(dataset.size());
-            while (choosenLines.contains(linePointer)){
-                linePointer = random.nextInt(dataset.size());
-            }
-
-            trainingSet.add(dataset.get(linePointer));
-            choosenLines.add(linePointer);
-        }
-
-        for(int i=0; i<dataset.size(); i++){
-            if(!choosenLines.contains(i)){
-                testSet.add(dataset.get(i));
-            }
-        }
-
-        splittedDataset.add(trainingSet);
-        splittedDataset.add(testSet);
-        return splittedDataset;
     }
 
     public HashMap<Integer, Double> findClassLabelRates(ArrayList<Line> dataset){

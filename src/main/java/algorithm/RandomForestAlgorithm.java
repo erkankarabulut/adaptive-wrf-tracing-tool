@@ -11,7 +11,7 @@ import org.apache.spark.ml.feature.*;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
-public class RandomForestAlgorithm {
+public class RandomForestAlgorithm extends BaseAlgorithm{
 
     public SparkBase sparkBase;
 
@@ -20,7 +20,7 @@ public class RandomForestAlgorithm {
     }
 
     public void applyRandomForest(String svFilePath, MainController mainController, Integer categoryCount){
-        Double accuracySum = new Double(0);
+        Double accuracySum = (double) 0;
         Double precisionSum = new Double(0);
         Double recallSum = new Double(0);
 
@@ -75,10 +75,7 @@ public class RandomForestAlgorithm {
             System.out.println("Iteration count: " + (i+1));
         }
 
-        System.out.println("Done!\n");
-        mainController.setAccuracy(accuracySum / mainController.getIterationCountValue());
-        mainController.setPrecision(precisionSum / mainController.getIterationCountValue());
-        mainController.setRecall(recallSum / mainController.getIterationCountValue());
+        setResults(mainController, accuracySum, precisionSum, recallSum);
     }
 
 }

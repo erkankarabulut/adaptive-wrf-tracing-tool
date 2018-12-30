@@ -12,6 +12,7 @@ import javafx.scene.image.ImageView;
 import main.java.algorithm.*;
 import main.java.base.SparkBase;
 import main.java.util.ClassLabelProducerUtil;
+import main.java.util.PROVOGenerator;
 import main.java.util.SparseVectorProducerUtil;
 
 import javax.swing.*;
@@ -100,6 +101,7 @@ public class MainController implements Initializable {
             }
         });
 
+        selectAlgorithmComboBox.setVisibleRowCount(100);
         selectAlgorithmComboBox.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent actionEvent) {
@@ -108,6 +110,7 @@ public class MainController implements Initializable {
             }
         });
 
+        new PROVOGenerator().producePROVOFileFromFilteredWRFLogFile(System.getProperty("user.dir") + "/data/filtered_log_file");
         runButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent actionEvent) {
@@ -135,13 +138,13 @@ public class MainController implements Initializable {
 
                         LogisticRegressionAlgorithm logisticRegressionAlgorithm = new LogisticRegressionAlgorithm(sparkBase);
                         logisticRegressionAlgorithm.setLrFamily("binomial");
-                        logisticRegressionAlgorithm.applyLogisticRegression(fileWithBinaryLabelsPath, getInstance());
+                        logisticRegressionAlgorithm.applyLogisticRegression(fileWithBinaryLabelsPath, getInstance(), false);
 
                     }else if(algorithmPointer == 1){ // Logistic Regression With Multi Class Labels
 
                         LogisticRegressionAlgorithm logisticRegressionAlgorithm = new LogisticRegressionAlgorithm(sparkBase);
                         logisticRegressionAlgorithm.setLrFamily("multinomial");
-                        logisticRegressionAlgorithm.applyLogisticRegression(fileWithMultiClassLabelsPath, getInstance());
+                        logisticRegressionAlgorithm.applyLogisticRegression(fileWithMultiClassLabelsPath, getInstance(), true);
 
                     }else if(algorithmPointer == 2){ // Naive Bayes With Binary Labels
 
@@ -177,15 +180,35 @@ public class MainController implements Initializable {
                         perceptronClassifierAlgorithm.applyMultilayerPerceptronClassifier(fileWithBinaryLabelsPath, getInstance(), featureCount, 4);
                         // 4 class for communication, derivation, generation and usage
 
-                    }else if(algorithmPointer == 8){ // Manual Naive Bayes Algorithm with Binary Class Labeled
+                    }else if(algorithmPointer == 8){ // Decision Tree Algorithm with Binary Class Labeled
+
+                        DecisionTreeAlgorithm decisionTreeAlgorithm = new DecisionTreeAlgorithm(sparkBase);
+                        decisionTreeAlgorithm.applyDecisionTreeAlgorithm(getInstance(), fileWithBinaryLabelsPath);
+
+                    }else if(algorithmPointer == 9){ // Decision Tree Algorithm with Multi-Class Class Labeled
+
+                        DecisionTreeAlgorithm decisionTreeAlgorithm = new DecisionTreeAlgorithm(sparkBase);
+                        decisionTreeAlgorithm.applyDecisionTreeAlgorithm(getInstance(), fileWithMultiClassLabelsPath);
+
+                    }else if(algorithmPointer == 10){ // Manual Naive Bayes Algorithm with Binary Class Labeled
 
                         NaiveBayesManual naiveBayesManual = new NaiveBayesManual();
                         naiveBayesManual.applyNaiveBayesAlgorithmForBinaryClassLabels(getInstance(), fileWithBinaryLabelsPath);
 
-                    }else if(algorithmPointer == 9){ // Manual Naive Bayes Algorithm with Multi-Class Class Labeled
+                    }else if(algorithmPointer == 11){ // Manual Naive Bayes Algorithm with Multi-Class Class Labeled
 
                         NaiveBayesManual naiveBayesManual = new NaiveBayesManual();
                         naiveBayesManual.applyNaiveBayesAlgorithmForBinaryClassLabels(getInstance(), fileWithMultiClassLabelsPath);
+
+                    }else if(algorithmPointer == 12){ // Manual Logistic Regression Algorithm with Binary Class Labels
+
+                        LogisticRegressionManual logisticRegressionManual = new LogisticRegressionManual();
+                        logisticRegressionManual.applyLogisticRegression(getInstance(), fileWithBinaryLabelsPath);
+
+                    }else if(algorithmPointer == 13){ // Manual Decision Algorithm with Binary Class Labels
+
+                        DecisionTreeAlgorithmManual decisionTreeAlgorithmManual = new DecisionTreeAlgorithmManual();
+                        decisionTreeAlgorithmManual.applyDecisionTree(getInstance(), fileWithBinaryLabelsPath);
 
                     }
 

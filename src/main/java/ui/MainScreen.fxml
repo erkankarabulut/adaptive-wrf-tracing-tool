@@ -39,8 +39,12 @@
                 <String fx:value="Random Forest With Multi Class Labels" />
                 <String fx:value="Multilayer Perceptron Classifier With Binary Labels" />
                 <String fx:value="Multilayer Perceptron Classifier With Multi Class Labels" />
+                <String fx:value="Decision Tree Algorithm With Binary Labels" />
+                <String fx:value="Decision Tree Algorithm With Multi Class Labels" />
                 <String fx:value="Manually Implemented Naive Bayes With Binary Class Labels" />
                 <String fx:value="Manually Implemented Naive Bayes With Multi-Class Class Labels" />
+                <String fx:value="Manually Implemented Logistic Regression With Binary Class Labels" />
+                <String fx:value="Manually Implemented Decision Tree With Binary Class Labels" />
             </FXCollections>
         </items>
     </ComboBox>
@@ -57,7 +61,7 @@
     <Label fx:id="errorMessageLabel" layoutY="360" layoutX="50" />
     <Label fx:id="resultLabel" layoutX="50" layoutY="390" >
         <font>
-            <Font name="Times New Roman" size="16"/>
+            <Font name="Times New Roman" size="12"/>
         </font>
     </Label>
 

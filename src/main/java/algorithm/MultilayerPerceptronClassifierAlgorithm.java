@@ -9,7 +9,7 @@ import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
-public class MultilayerPerceptronClassifierAlgorithm {
+public class MultilayerPerceptronClassifierAlgorithm extends BaseAlgorithm {
 
     public SparkBase sparkBase;
 
@@ -54,10 +54,7 @@ public class MultilayerPerceptronClassifierAlgorithm {
 
         System.out.println("Iteration count: " + (1));
 
-        System.out.println("Done!\n");
-        mainController.setAccuracy(accuracySum / mainController.getIterationCountValue());
-        mainController.setPrecision(precisionSum / mainController.getIterationCountValue());
-        mainController.setRecall(recallSum / mainController.getIterationCountValue());
+        setResults(mainController, accuracySum, precisionSum, recallSum);
     }
 
 }

@@ -13,20 +13,25 @@ import org.apache.spark.sql.Row;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class LogisticRegressionAlgorithm {
+public class LogisticRegressionAlgorithm extends BaseAlgorithm{
 
     public SparkBase sparkBase;
     public String lrFamily;
 
     public LogisticRegressionAlgorithm(SparkBase sparkBase){
         this.sparkBase  = sparkBase;
-        lrFamily        = "binomial";
     }
 
-    public void applyLogisticRegression(String svFilePath, MainController mainController){
+    public void applyLogisticRegression(String svFilePath, MainController mainController, Boolean isMultiClass){
         Double accuracySum = new Double(0);
         Double precisionSum = new Double(0);
         Double recallSum = new Double(0);
+
+        if(isMultiClass){
+            lrFamily = "multinomial";
+        }else {
+            lrFamily = "binomial";
+        }
 
         Dataset<Row> dataFrame =
                 sparkBase.getSpark().read().format("libsvm").load(svFilePath);
@@ -61,10 +66,7 @@ public class LogisticRegressionAlgorithm {
             System.out.println("Iteration count: " + (i+1));
         }
 
-        System.out.println("Done!\n");
-        mainController.setAccuracy(accuracySum / mainController.getIterationCountValue());
-        mainController.setPrecision(precisionSum / mainController.getIterationCountValue());
-        mainController.setRecall(recallSum / mainController.getIterationCountValue());
+        setResults(mainController, accuracySum, precisionSum, recallSum);
     }
 
     public void setLrFamily(String lrFamily) {

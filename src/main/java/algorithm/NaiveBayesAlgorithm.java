@@ -10,7 +10,7 @@ import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
-public class NaiveBayesAlgorithm {
+public class NaiveBayesAlgorithm extends BaseAlgorithm {
 
     public SparkBase sparkBase;
 
@@ -53,10 +53,7 @@ public class NaiveBayesAlgorithm {
             System.out.println("Iteration count: " + (i+1));
         }
 
-        System.out.println("Done!\n");
-        mainController.setAccuracy(accuracySum / mainController.getIterationCountValue());
-        mainController.setPrecision(precisionSum / mainController.getIterationCountValue());
-        mainController.setRecall(recallSum / mainController.getIterationCountValue());
+        setResults(mainController, accuracySum, precisionSum, recallSum);
     }
 
 
