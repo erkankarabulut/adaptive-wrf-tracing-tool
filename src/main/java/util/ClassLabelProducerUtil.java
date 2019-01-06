@@ -35,6 +35,11 @@ public class ClassLabelProducerUtil {
         if(!file.exists()){
             file.mkdir();
         }
+
+        file = new File(root + "/folds");
+        if(!file.exists()){
+            file.mkdir();
+        }
     }
 
     public String produceBinaryLabels(String logFilePath, String featureFilePath, String filteredFilePath, String logFileName) {

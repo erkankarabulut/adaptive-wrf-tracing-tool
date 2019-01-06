@@ -22,7 +22,7 @@ public class NaiveBayesManual extends BaseAlgorithm{
 
         ArrayList<Line> dataSet = readSparseVector(filePath);
         HashMap<Integer, Double> classLabelRates = findClassLabelRates(dataSet);
-        System.out.println(classLabelRates.toString());
+
         for(int i=0; i<controller.getIterationCountValue(); i++){
             Integer tp = new Integer(0);
             Integer fp = new Integer(0);

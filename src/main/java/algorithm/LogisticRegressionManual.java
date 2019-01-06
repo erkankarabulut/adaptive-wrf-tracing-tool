@@ -77,7 +77,6 @@ public class LogisticRegressionManual extends BaseAlgorithm {
             }
         }
 
-        System.out.println(tp + " " + tn + " " + fp + " " + fn);
         Double accuracy     = (tp.doubleValue() + tn.doubleValue()) / testData.size();
         Double precision    = (tp.doubleValue()) / (tp.doubleValue() + fp.doubleValue());
         Double recall       = (tp.doubleValue()) / (tp.doubleValue() + fn.doubleValue());
@@ -106,7 +105,6 @@ public class LogisticRegressionManual extends BaseAlgorithm {
                 }
             }
 
-            System.out.println("Iteration count: " + n);
         }
 
         return weights;

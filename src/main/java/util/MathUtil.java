@@ -1,5 +1,7 @@
 package main.java.util;
 
+import java.util.ArrayList;
+
 public class MathUtil {
 
     public double sigmoid(double value) {
@@ -13,6 +15,16 @@ public class MathUtil {
 
     public double log(double base, double value){
         return Math.log(value) / Math.log(base);
+    }
+
+    public double getStandardDeviation(ArrayList<Double> list, Double mean){
+        double temp = 0;
+        for(double value : list){
+            temp += (value - mean) * (value - mean);
+        }
+
+        temp /= (list.size()-1);
+        return Math.sqrt(temp);
     }
 
 }

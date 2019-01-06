@@ -1,12 +1,17 @@
 package main.java.algorithm;
 
+import main.java.base.SparkBase;
 import main.java.bean.Line;
 import main.java.controller.MainController;
+import main.java.util.FileUtil;
+import main.java.util.MathUtil;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.util.ArrayList;
-import java.util.Random;
+import java.util.*;
 
 public class BaseAlgorithm {
 
@@ -38,11 +43,15 @@ public class BaseAlgorithm {
         return sparseVector;
     }
 
-    static void setResults(MainController mainController, Double accuracySum, Double precisionSum, Double recallSum) {
-        System.out.println("Done!\n");
-        mainController.setAccuracy(accuracySum / mainController.getIterationCountValue());
-        mainController.setPrecision(precisionSum / mainController.getIterationCountValue());
-        mainController.setRecall(recallSum / mainController.getIterationCountValue());
+    static void setResults(MainController mainController, ArrayList<Double> accuracyList, ArrayList<Double> precisionList, ArrayList<Double> recallList) {
+        MathUtil mathUtil = new MathUtil();
+        mainController.setAccuracy(accuracyList.stream().mapToDouble(val -> val).average().orElse(0.0));
+        mainController.setPrecision(precisionList.stream().mapToDouble(val -> val).average().orElse(0.0));
+        mainController.setRecall(recallList.stream().mapToDouble(val -> val).average().orElse(0.0));
+
+        mainController.setSdAccuracy(mathUtil.getStandardDeviation(accuracyList, mainController.getAccuracy()));
+        mainController.setSdPrecision(mathUtil.getStandardDeviation(precisionList, mainController.getPrecision()));
+        mainController.setSdRecall(mathUtil.getStandardDeviation(recallList, mainController.getRecall()));
     }
 
     public ArrayList<ArrayList<Line>> splitDateset(ArrayList<Line> dataset, Integer trainingRate, Integer testRate){
@@ -85,6 +94,134 @@ public class BaseAlgorithm {
         }
 
         return attributeCount;
+    }
+
+   /* public ArrayList<Dataset<Row>> splitAccordingTo10FoldCrossValidation(Dataset<Row> data, SparkSession sparkSession){
+        ArrayList<Dataset<Row>> resultList = new ArrayList<>();
+        HashMap<Integer, ArrayList<Row>> folds = new HashMap<>();
+        for(int i=0; i<10; i++){
+            folds.put(i, new ArrayList<Row>());
+        }
+
+        List<Row> allData = data.collectAsList();
+        int foldSize = allData.size()/10;
+        int randomLineCount;
+        Random random = new Random();
+
+        System.out.println("Splitting data into folds ...");
+        for(int i=0; i<9; i++){
+            System.out.println("Creating the " + (i+1) + ". fold ...");
+            ArrayList<Row> choosenLines = new ArrayList<>();
+            ArrayList<Integer> linePointers = new ArrayList<>();
+            for(int j=0; j<foldSize; j++){
+                randomLineCount = random.nextInt(allData.size());
+
+                if(!linePointers.contains(randomLineCount)){
+                    folds.get(i).add(allData.get(randomLineCount));
+                    linePointers.add(randomLineCount);
+                    choosenLines.add(allData.get(randomLineCount));
+                }else {
+                    j--;
+                }
+            }
+
+            allData.remove(choosenLines);
+
+            Dataset<Row> fold= sparkSession.createDataFrame(choosenLines, Row.class);
+            resultList.add(fold);
+        }
+
+        System.out.println("Creating the 10. fold ...");
+        Dataset<Row> fold= sparkSession.createDataFrame(allData, Row.class);
+        resultList.add(fold);
+
+        return resultList;
+    }*/
+
+    public ArrayList<ArrayList<Dataset<Row>>> splitAccordingTo10FoldCrossValidation(String filePath, Integer iterationCount, String fileName, SparkBase sparkBase, Integer numOfFeatures){
+        ArrayList<ArrayList<Dataset<Row>>> dataSets = new ArrayList<>();
+        for(int i=0; i<10; i++){
+            dataSets.add(new ArrayList<Dataset<Row>>());
+        }
+
+        try{
+            FileUtil fileUtil = new FileUtil();
+            BufferedReader bufferedReader = new BufferedReader(new FileReader(filePath));
+            String line;
+            ArrayList<String> wholeFile = new ArrayList<>();
+            ArrayList<String> testfiles = new ArrayList<>();
+            ArrayList<String> trainingFiles = new ArrayList<>();
+
+            HashMap<Integer, ArrayList<String>> folds = new HashMap<>();
+            for(int i=0; i<10; i++){
+                folds.put(i, new ArrayList<String>());
+            }
+
+            while ((line = bufferedReader.readLine()) != null){
+                wholeFile.add(line);
+            }
+
+            ArrayList<String> copyWholeFile = new ArrayList<>();
+            copyWholeFile.addAll(wholeFile);
+
+            Random random = new Random();
+            int randomLineCount;
+            int foldSize = wholeFile.size()/10;
+
+            for(int i=0; i<9; i++){
+                ArrayList<String> choosenLines = new ArrayList<>();
+                ArrayList<Integer> linePointers = new ArrayList<>();
+                for(int j=0; j<foldSize; j++){
+                    randomLineCount = random.nextInt(wholeFile.size());
+
+                    if(!linePointers.contains(randomLineCount)){
+                        folds.get(i).add(wholeFile.get(randomLineCount));
+                        linePointers.add(randomLineCount);
+                        choosenLines.add(wholeFile.get(randomLineCount));
+                    }else {
+                        j--;
+                    }
+                }
+
+                fileUtil.writeToFile(i+1, iterationCount, fileName, choosenLines, "test", numOfFeatures);
+
+                ArrayList<String> tempTraining = new ArrayList<>();
+                tempTraining.addAll(copyWholeFile);
+
+                int counter = 0;
+                for(int k=0; k<linePointers.size(); k++){
+                    tempTraining.remove(k-counter);
+                    wholeFile.remove(k-counter);
+                    counter++;
+                }
+
+                fileUtil.writeToFile(i+1, iterationCount, fileName, tempTraining, "training", numOfFeatures);
+
+                testfiles.add(fileUtil.getFullFilePath(fileName, iterationCount, i+1, "test"));
+                trainingFiles.add(fileUtil.getFullFilePath(fileName, iterationCount, i+1, "training"));
+            }
+
+            fileUtil.writeToFile(10, iterationCount, fileName, wholeFile, "test", numOfFeatures);
+
+            ArrayList<String> tempTraining = new ArrayList<>();
+            tempTraining.addAll(copyWholeFile);
+            tempTraining.removeAll(wholeFile);
+            fileUtil.writeToFile(10, iterationCount, fileName, tempTraining, "training", numOfFeatures);
+
+            testfiles.add(fileUtil.getFullFilePath(fileName, iterationCount, 10, "test"));
+            trainingFiles.add(fileUtil.getFullFilePath(fileName, iterationCount, 10, "training"));
+
+            for(int i=0; i<dataSets.size(); i++){
+                dataSets.get(i).add(fileUtil.getDataSet(sparkBase, testfiles.get(i)));
+                dataSets.get(i).add(fileUtil.getDataSet(sparkBase, trainingFiles.get(i)));
+            }
+
+            bufferedReader.close();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+        return dataSets;
     }
 
 }

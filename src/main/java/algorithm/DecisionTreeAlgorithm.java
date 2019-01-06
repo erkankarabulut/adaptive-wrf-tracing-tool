@@ -2,87 +2,117 @@ package main.java.algorithm;
 
 import main.java.base.SparkBase;
 import main.java.controller.MainController;
-import main.java.util.MathUtil;
+
+import main.java.util.FileUtil;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineModel;
 import org.apache.spark.ml.PipelineStage;
 import org.apache.spark.ml.classification.DecisionTreeClassifier;
-import org.apache.spark.ml.classification.DecisionTreeClassificationModel;
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator;
 import org.apache.spark.ml.feature.*;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SparkSession;
+
+import java.util.ArrayList;
 
 public class DecisionTreeAlgorithm extends BaseAlgorithm {
 
     public SparkBase sparkBase;
+    public FileUtil fileUtil;
 
     public DecisionTreeAlgorithm(SparkBase sparkBase){
         this.sparkBase = sparkBase;
+        this.fileUtil  = new FileUtil();
     }
 
-    public void applyDecisionTreeAlgorithm(MainController controller, String filePath){
+    public void applyDecisionTreeAlgorithm(MainController controller, String filePath, String fileName, Integer numOfFeatures){
 
-        Dataset<Row> data = sparkBase
-                .getSpark()
-                .read()
-                .format("libsvm")
-                .load(filePath);
+        ArrayList<Double> accuracyList  = new ArrayList<>();
+        ArrayList<Double> precisionList = new ArrayList<>();
+        ArrayList<Double> recallList    = new ArrayList<>();
 
-        StringIndexerModel labelIndexer = new StringIndexer()
-                .setInputCol("label")
-                .setOutputCol("indexedLabel")
-                .fit(data);
-
-        VectorIndexerModel featureIndexer = new VectorIndexer()
-                .setInputCol("features")
-                .setOutputCol("indexedFeatures")
-                .setMaxCategories(4)
-                .fit(data);
-
-        Double accuracySum = new Double(0);
-        Double precisionSum = new Double(0);
-        Double recallSum = new Double(0);
-        System.out.println("Here: " + new MathUtil().findInformationGain(9,5));
         for(int i=0; i<controller.getIterationCountValue(); i++){
-            Dataset<Row>[] splits = data.randomSplit(new double[]{controller.getTrainingDataRate(), controller.getTestDataRate()});
-            Dataset<Row> trainingData = splits[0];
-            Dataset<Row> testData = splits[1];
+            Dataset<Row> trainingData = null;
+            Dataset<Row> testData     = null;
+            ArrayList<ArrayList<Dataset<Row>>> datasets = new ArrayList<>();
 
-            DecisionTreeClassifier dt = new DecisionTreeClassifier()
-                    .setLabelCol("indexedLabel")
-                    .setFeaturesCol("indexedFeatures");
+            Double accuracySumKFold  = new Double(0);
+            Double precisionSumKFold = new Double(0);
+            Double recallSumKFold    = new Double(0);
 
-            IndexToString labelConverter = new IndexToString()
-                    .setInputCol("prediction")
-                    .setOutputCol("predictedLabel")
-                    .setLabels(labelIndexer.labels());
+            int counter;
 
-            Pipeline pipeline = new Pipeline()
-                    .setStages(new PipelineStage[]{labelIndexer, featureIndexer, dt, labelConverter});
+            if(controller.getTenFold().isSelected()){
+                counter = 10;
+                datasets = splitAccordingTo10FoldCrossValidation(filePath, i, fileName, sparkBase, numOfFeatures);
+            }else {
+                counter = 1;
+                Dataset<Row>[] splits = fileUtil.getDataSet(sparkBase, filePath).randomSplit(new double[]{controller.getTrainingDataRate(), controller.getTestDataRate()});
+                trainingData = splits[0];
+                testData = splits[1];
+            }
 
-            PipelineModel model = pipeline.fit(trainingData);
+            for(int k=0; k<counter; k++){
 
-            Dataset<Row> predictions = model.transform(testData);
+                if(controller.getTenFold().isSelected()){
+                    testData = datasets.get(k).get(0);
+                    trainingData = datasets.get(k).get(1);
+                }
 
-            predictions.select("predictedLabel", "label", "features").show(5);
+                StringIndexerModel labelIndexer = new StringIndexer()
+                        .setInputCol("label")
+                        .setOutputCol("indexedLabel")
+                        .fit(trainingData);
 
-            MulticlassClassificationEvaluator evaluator = new MulticlassClassificationEvaluator()
-                    .setLabelCol("indexedLabel")
-                    .setPredictionCol("prediction")
-                    .setMetricName("accuracy");
+                VectorIndexerModel featureIndexer = new VectorIndexer()
+                        .setHandleInvalid("keep")
+                        .setInputCol("features")
+                        .setOutputCol("indexedFeatures")
+                        .setMaxCategories(4)
+                        .fit(trainingData);
 
-            accuracySum += evaluator.evaluate(predictions);
+                DecisionTreeClassifier dt = new DecisionTreeClassifier()
+                        .setLabelCol("indexedLabel")
+                        .setFeaturesCol("indexedFeatures");
 
-            evaluator.setMetricName("weightedPrecision");
-            precisionSum += (evaluator.evaluate(predictions));
+                IndexToString labelConverter = new IndexToString()
+                        .setInputCol("prediction")
+                        .setOutputCol("predictedLabel")
+                        .setLabels(labelIndexer.labels());
 
-            evaluator.setMetricName("weightedRecall");
-            recallSum += (evaluator.evaluate(predictions));
+                Pipeline pipeline = new Pipeline()
+                        .setStages(new PipelineStage[]{labelIndexer, featureIndexer, dt, labelConverter});
+
+                trainingData.sparkSession().read().format("libsvm");
+                PipelineModel model = pipeline.fit(trainingData);
+
+                Dataset<Row> predictions = model.transform(testData);
+
+                MulticlassClassificationEvaluator evaluator = new MulticlassClassificationEvaluator()
+                        .setLabelCol("indexedLabel")
+                        .setPredictionCol("prediction")
+                        .setMetricName("accuracy");
+
+                accuracySumKFold += evaluator.evaluate(predictions);
+
+                evaluator.setMetricName("weightedPrecision");
+                precisionSumKFold += (evaluator.evaluate(predictions));
+
+                evaluator.setMetricName("weightedRecall");
+                recallSumKFold += (evaluator.evaluate(predictions));
+            }
+
+            accuracySumKFold  /= counter;
+            precisionSumKFold /= counter;
+            recallSumKFold    /= counter;
+
+            accuracyList.add(accuracySumKFold);
+            precisionList.add(precisionSumKFold);
+            recallList.add(recallSumKFold);
+            System.out.println("Iteration count: " + (i+1));
         }
 
-        setResults(controller, accuracySum, precisionSum, recallSum);
+        setResults(controller, accuracyList, precisionList, recallList);
     }
 
 }
