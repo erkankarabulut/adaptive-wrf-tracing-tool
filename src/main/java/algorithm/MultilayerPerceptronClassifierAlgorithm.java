@@ -58,7 +58,8 @@ public class MultilayerPerceptronClassifierAlgorithm extends BaseAlgorithm {
                         .setLayers(layers)
                         .setBlockSize(128)
                         .setSeed(1234L)
-                        .setMaxIter(100);
+                        .setMaxIter(20)
+                        .setTol(0.0001);
 
                 MultilayerPerceptronClassificationModel model = trainer.fit(trainingData);
 

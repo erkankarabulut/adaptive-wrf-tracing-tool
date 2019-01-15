@@ -42,10 +42,11 @@
                 <String fx:value="Multilayer Perceptron Classifier With Multi Class Labels" />
                 <String fx:value="Decision Tree Algorithm With Binary Labels" />
                 <String fx:value="Decision Tree Algorithm With Multi Class Labels" />
+                <String fx:value="OneVsAll Algorithm" />
                 <String fx:value="Manually Implemented Naive Bayes With Binary Class Labels" />
                 <String fx:value="Manually Implemented Naive Bayes With Multi-Class Class Labels" />
                 <String fx:value="Manually Implemented Logistic Regression With Binary Class Labels" />
-                <String fx:value="Manually Implemented Decision Tree With Binary Class Labels" />
+                <String fx:value="Manually Implemented OneVsAll Algorithm" />
             </FXCollections>
         </items>
     </ComboBox>
@@ -59,7 +60,7 @@
     <Label fx:id="trainingDataRateLabel" layoutX="440" layoutY="230"  />
     <Label fx:id="testDataRateLabel" layoutX="545" layoutY="230"  />
 
-    <Label fx:id="errorMessageLabel" layoutY="400" layoutX="50" />
+    <Label fx:id="errorMessageLabel" layoutY="380" layoutX="50" />
     <Label fx:id="resultLabel" layoutX="50" layoutY="410" >
         <font>
             <Font name="Times New Roman" size="12"/>
@@ -73,7 +74,7 @@
     <Label layoutX="50.0" layoutY="270.0" text="10-fold cross validation:" />
     <CheckBox fx:id="tenFold" layoutX="310.0" prefWidth="20" layoutY="270" />
 
-    <Label layoutX="350" layoutY="310" text="Iteration Count: " />
+    <Label fx:id="iterationCountString" layoutX="350" layoutY="310" text="Iteration Count: " />
     <Label fx:id="iterationCountLabel"  layoutX="460" layoutY="310" />
     <Label layoutX="50.0" layoutY="310.0" prefHeight="21.0" prefWidth="150.0" text="Iteration Count: " />
     <Spinner fx:id="iterationCount" layoutX="260" layoutY="310" prefWidth="70" />

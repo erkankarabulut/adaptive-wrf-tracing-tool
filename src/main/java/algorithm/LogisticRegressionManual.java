@@ -1,57 +1,98 @@
 package main.java.algorithm;
 
+import main.java.base.SparkBase;
 import main.java.bean.Line;
 import main.java.controller.MainController;
+import main.java.util.FileUtil;
 import main.java.util.MathUtil;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 
 import java.util.ArrayList;
 
 public class LogisticRegressionManual extends BaseAlgorithm {
 
     private MathUtil mathUtil;
+    private SparkBase sparkBase;
     private static Integer ITERATIONS   = 10;
     private static Double LEARNING_RATE = 0.1;
+    private FileUtil fileUtil;
 
-    public LogisticRegressionManual(){
-        this.mathUtil = new MathUtil();
+    public LogisticRegressionManual(SparkBase sparkBase){
+        this.mathUtil  = new MathUtil();
+        this.sparkBase = sparkBase;
+        this.fileUtil  = new FileUtil();
     }
 
-    public void applyLogisticRegression(MainController controller, String filePath){
-        Double accuracy  = new Double(0);
-        Double precision = new Double(0);
-        Double recall    = new Double(0);
+    public void applyLogisticRegression(MainController controller, String filePath, String fileName, Integer numOfFeatures){
+
+        ArrayList<Double> accuracyList  = new ArrayList<>();
+        ArrayList<Double> precisionList = new ArrayList<>();
+        ArrayList<Double> recallList    = new ArrayList<>();
 
         ArrayList<Line> dataSet = readSparseVector(filePath);
 
         for(int i=0; i<controller.getIterationCountValue(); i++){
-            ArrayList<ArrayList<Line>> splittedDataset  = splitDateset(dataSet, controller.getTrainingDataRate(), controller.getTestDataRate());
-            ArrayList<Line> training                    = splittedDataset.get(0);
-            ArrayList<Line> test                        = splittedDataset.get(1);
 
-            ArrayList<Double> generateTrainingModel     = trainModel(training, getAttributeCount(dataSet));
-            ArrayList<Integer> predictedResults         = new ArrayList<>();
-            for(Line testLine : test){
-                if(classify(testLine.wordList, generateTrainingModel) >= 0.5){
-                    predictedResults.add(1);
-                }else {
-                    predictedResults.add(0);
-                }
+            ArrayList<ArrayList<ArrayList<Line>>> datasets = null;
+            ArrayList<Line> trainingData = null;
+            ArrayList<Line> testData     = null;
+
+            Double accuracySumKFold  = new Double(0);
+            Double precisionSumKFold = new Double(0);
+            Double recallSumKFold    = new Double(0);
+
+            int counter;
+
+            if(controller.getTenFold().isSelected()){
+                counter = 10;
+                datasets = splitAccordingTo10FoldCrossValidation(filePath, i, fileName, numOfFeatures);
+            }else {
+                counter = 1;
+                ArrayList<ArrayList<Line>> splits = splitDateSet(dataSet, controller.getTrainingDataRate());
+                trainingData = splits.get(0);
+                testData = splits.get(1);
             }
 
-            ArrayList<Double> results = calculateResults(predictedResults, test);
-            accuracy    += results.get(0);
-            precision   += results.get(1);
-            recall      += results.get(2);
+            for(int k=0; k<counter; k++){
+
+                if(controller.getTenFold().isSelected()){
+                    testData = datasets.get(k).get(0);
+                    trainingData = datasets.get(k).get(1);
+                }
+
+                ArrayList<Double> results = logisticRegression(trainingData, testData, getAttributeCount(dataSet));
+
+                accuracySumKFold  += results.get(0);
+                precisionSumKFold += results.get(1);
+                recallSumKFold    += results.get(2);
+            }
+
+            accuracySumKFold  /= counter;
+            precisionSumKFold /= counter;
+            recallSumKFold    /= counter;
+
+            accuracyList.add(accuracySumKFold);
+            precisionList.add(precisionSumKFold);
+            recallList.add(recallSumKFold);
+            System.out.println("Iteration count: " + (i+1));
         }
 
-        accuracy    /= controller.getIterationCountValue();
-        precision   /= controller.getIterationCountValue();
-        recall      /= controller.getIterationCountValue();
+        setResults(controller, accuracyList, precisionList, recallList);
+    }
 
-        controller.setAccuracy(accuracy);
-        controller.setPrecision(precision);
-        controller.setRecall(recall);
+    public ArrayList<Double> logisticRegression(ArrayList<Line> trainingData, ArrayList<Line> testData, Integer attributeCount){
+        ArrayList<Double> generateTrainingModel     = trainModel(trainingData, attributeCount);
+        ArrayList<Integer> predictedResults         = new ArrayList<>();
+        for(Line testLine : testData){
+            if(classify(testLine.wordList, generateTrainingModel) >= 0.5){
+                predictedResults.add(1);
+            }else {
+                predictedResults.add(0);
+            }
+        }
 
+        return calculateResults(predictedResults, testData);
     }
 
     public ArrayList<Double> calculateResults(ArrayList<Integer> predictedResults, ArrayList<Line> testData){
@@ -110,7 +151,7 @@ public class LogisticRegressionManual extends BaseAlgorithm {
         return weights;
     }
 
-    private double classify(ArrayList<Integer> words, ArrayList<Double> weights) {
+    public double classify(ArrayList<Integer> words, ArrayList<Double> weights) {
         double logit = .0;
         for (int i=0; i<weights.size();i++)  {
             logit += weights.get(i) * (words.contains(i) ? 1 : 0);

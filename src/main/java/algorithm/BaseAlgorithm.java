@@ -45,13 +45,14 @@ public class BaseAlgorithm {
 
     static void setResults(MainController mainController, ArrayList<Double> accuracyList, ArrayList<Double> precisionList, ArrayList<Double> recallList) {
         MathUtil mathUtil = new MathUtil();
-        mainController.setAccuracy(accuracyList.stream().mapToDouble(val -> val).average().orElse(0.0));
-        mainController.setPrecision(precisionList.stream().mapToDouble(val -> val).average().orElse(0.0));
-        mainController.setRecall(recallList.stream().mapToDouble(val -> val).average().orElse(0.0));
 
-        mainController.setSdAccuracy(mathUtil.getStandardDeviation(accuracyList, mainController.getAccuracy()));
-        mainController.setSdPrecision(mathUtil.getStandardDeviation(precisionList, mainController.getPrecision()));
-        mainController.setSdRecall(mathUtil.getStandardDeviation(recallList, mainController.getRecall()));
+        mainController.setAccuracy(accuracyList.contains(Double.NaN) ? 1 : accuracyList.stream().mapToDouble(val -> val).average().orElse(0.0));
+        mainController.setPrecision(precisionList.contains(Double.NaN) ? 1 : precisionList.stream().mapToDouble(val -> val).average().orElse(0.0));
+        mainController.setRecall(recallList.contains(Double.NaN) ? 1 : recallList.stream().mapToDouble(val -> val).average().orElse(0.0));
+
+        mainController.setSdAccuracy(accuracyList.contains(Double.NaN) ? 0 : mathUtil.getStandardDeviation(accuracyList, mainController.getAccuracy()));
+        mainController.setSdPrecision(precisionList.contains(Double.NaN) ? 0 : mathUtil.getStandardDeviation(precisionList, mainController.getPrecision()));
+        mainController.setSdRecall(recallList.contains(Double.NaN) ? 0 : mathUtil.getStandardDeviation(recallList, mainController.getRecall()));
     }
 
     public ArrayList<ArrayList<Line>> splitDateset(ArrayList<Line> dataset, Integer trainingRate, Integer testRate){
@@ -222,6 +223,132 @@ public class BaseAlgorithm {
         }
 
         return dataSets;
+    }
+
+    public ArrayList<ArrayList<ArrayList<Line>>> splitAccordingTo10FoldCrossValidation(String filePath, Integer iterationCount, String fileName, Integer numOfFeatures){
+        ArrayList<ArrayList<ArrayList<Line>>> dataSets = new ArrayList<>();
+        for(int i=0; i<10; i++){
+            dataSets.add(new ArrayList<ArrayList<Line>>());
+        }
+
+        try{
+            FileUtil fileUtil = new FileUtil();
+            BufferedReader bufferedReader = new BufferedReader(new FileReader(filePath));
+            String line;
+            ArrayList<String> wholeFile = new ArrayList<>();
+            ArrayList<String> testfiles = new ArrayList<>();
+            ArrayList<String> trainingFiles = new ArrayList<>();
+
+            HashMap<Integer, ArrayList<String>> folds = new HashMap<>();
+            for(int i=0; i<10; i++){
+                folds.put(i, new ArrayList<String>());
+            }
+
+            while ((line = bufferedReader.readLine()) != null){
+                wholeFile.add(line);
+            }
+
+            ArrayList<String> copyWholeFile = new ArrayList<>();
+            copyWholeFile.addAll(wholeFile);
+
+            Random random = new Random();
+            int randomLineCount;
+            int foldSize = wholeFile.size()/10;
+
+            for(int i=0; i<9; i++){
+                ArrayList<String> choosenLines = new ArrayList<>();
+                ArrayList<Integer> linePointers = new ArrayList<>();
+                for(int j=0; j<foldSize; j++){
+                    randomLineCount = random.nextInt(wholeFile.size());
+
+                    if(!linePointers.contains(randomLineCount)){
+                        folds.get(i).add(wholeFile.get(randomLineCount));
+                        linePointers.add(randomLineCount);
+                        choosenLines.add(wholeFile.get(randomLineCount));
+                    }else {
+                        j--;
+                    }
+                }
+
+                fileUtil.writeToFile(i+1, iterationCount, fileName, choosenLines, "test", numOfFeatures);
+
+                ArrayList<String> tempTraining = new ArrayList<>();
+                tempTraining.addAll(copyWholeFile);
+
+                int counter = 0;
+                for(int k=0; k<linePointers.size(); k++){
+                    tempTraining.remove(k-counter);
+                    wholeFile.remove(k-counter);
+                    counter++;
+                }
+
+                fileUtil.writeToFile(i+1, iterationCount, fileName, tempTraining, "training", numOfFeatures);
+
+                testfiles.add(fileUtil.getFullFilePath(fileName, iterationCount, i+1, "test"));
+                trainingFiles.add(fileUtil.getFullFilePath(fileName, iterationCount, i+1, "training"));
+            }
+
+            fileUtil.writeToFile(10, iterationCount, fileName, wholeFile, "test", numOfFeatures);
+
+            ArrayList<String> tempTraining = new ArrayList<>();
+            tempTraining.addAll(copyWholeFile);
+            tempTraining.removeAll(wholeFile);
+            fileUtil.writeToFile(10, iterationCount, fileName, tempTraining, "training", numOfFeatures);
+
+            testfiles.add(fileUtil.getFullFilePath(fileName, iterationCount, 10, "test"));
+            trainingFiles.add(fileUtil.getFullFilePath(fileName, iterationCount, 10, "training"));
+
+            for(int i=0; i<dataSets.size(); i++){
+                dataSets.get(i).add(readSparseVector(testfiles.get(i)));
+                dataSets.get(i).add(readSparseVector(trainingFiles.get(i)));
+            }
+
+            bufferedReader.close();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+        return dataSets;
+    }
+
+    public ArrayList<ArrayList<Line>> splitDateSet(ArrayList<Line> data, Integer splitPoint){
+        ArrayList<ArrayList<Line>> splittedDataSet = new ArrayList<>();
+
+        int trainingSetSize = ((Double)(data.size() * (splitPoint.doubleValue() / 100))).intValue();
+
+        Random random = new Random();
+        ArrayList<Line> training = new ArrayList<>();
+        ArrayList<Line> test     = new ArrayList<>();
+
+        ArrayList<Integer> choosenPoints = new ArrayList<>();
+        for(int i=0; i<trainingSetSize; i++){
+            int randomPoint = random.nextInt(data.size());
+            training.add(data.get(randomPoint));
+            choosenPoints.add(randomPoint);
+        }
+
+        for(int i=0; i<data.size(); i++){
+            if(!choosenPoints.contains(i)){
+                test.add(data.get(i));
+            }
+        }
+
+        splittedDataSet.add(training);
+        splittedDataSet.add(test);
+
+        return splittedDataSet;
+    }
+
+    public ArrayList<Integer> getDifferentClassLabels(ArrayList<Line> data){
+        ArrayList<Integer> differentClassLabels = new ArrayList<>();
+
+        for(Line line : data){
+            if(!differentClassLabels.contains(line.getClassLabel())){
+                differentClassLabels.add(line.getClassLabel());
+            }
+        }
+
+        return differentClassLabels;
     }
 
 }

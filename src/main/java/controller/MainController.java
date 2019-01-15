@@ -41,6 +41,7 @@ public class MainController implements Initializable {
     @FXML Label errorMessageLabel;
     @FXML Label iterationCountLabel;
     @FXML Label tenFoldString;
+    @FXML Label iterationCountString;
 
     @FXML CheckBox tenFold;
 
@@ -203,25 +204,30 @@ public class MainController implements Initializable {
                         DecisionTreeAlgorithm decisionTreeAlgorithm = new DecisionTreeAlgorithm(sparkBase);
                         decisionTreeAlgorithm.applyDecisionTreeAlgorithm(getInstance(), fileWithMultiClassLabelsPath, logFileName, sparseVectorProducerUtil.numOfVocab);
 
-                    }else if(algorithmPointer == 10){ // Manual Naive Bayes Algorithm with Binary Class Labeled
+                    }else if(algorithmPointer == 10){ // OneVsAll Algorithm
+
+                        OneVsAllClassifier oneVsAllClassifier = new OneVsAllClassifier(sparkBase);
+                        oneVsAllClassifier.applyOneVsAllClassifier(getInstance(), fileWithMultiClassLabelsPath, logFileName, sparseVectorProducerUtil.numOfVocab);
+
+                    }else if(algorithmPointer == 11){ // Manual Naive Bayes Algorithm with Binary Class Labeled
 
                         NaiveBayesManual naiveBayesManual = new NaiveBayesManual();
-                        naiveBayesManual.applyNaiveBayesAlgorithmForBinaryClassLabels(getInstance(), fileWithBinaryLabelsPath);
+                        naiveBayesManual.applyNaiveBayesAlgorithmForBinaryClassLabels(getInstance(), fileWithBinaryLabelsPath, logFileName, sparseVectorProducerUtil.numOfVocab);
 
-                    }else if(algorithmPointer == 11){ // Manual Naive Bayes Algorithm with Multi-Class Class Labeled
+                    }else if(algorithmPointer == 12){ // Manual Naive Bayes Algorithm with Multi-Class Class Labeled
 
                         NaiveBayesManual naiveBayesManual = new NaiveBayesManual();
-                        naiveBayesManual.applyNaiveBayesAlgorithmForBinaryClassLabels(getInstance(), fileWithMultiClassLabelsPath);
+                        naiveBayesManual.applyNaiveBayesAlgorithmForBinaryClassLabels(getInstance(), fileWithMultiClassLabelsPath, logFileName, sparseVectorProducerUtil.numOfVocab);
 
-                    }else if(algorithmPointer == 12){ // Manual Logistic Regression Algorithm with Binary Class Labels
+                    }else if(algorithmPointer == 13){ // Manual Logistic Regression Algorithm with Binary Class Labels
 
-                        LogisticRegressionManual logisticRegressionManual = new LogisticRegressionManual();
-                        logisticRegressionManual.applyLogisticRegression(getInstance(), fileWithBinaryLabelsPath);
+                        LogisticRegressionManual logisticRegressionManual = new LogisticRegressionManual(sparkBase);
+                        logisticRegressionManual.applyLogisticRegression(getInstance(), fileWithBinaryLabelsPath, logFileName, sparseVectorProducerUtil.numOfVocab);
 
-                    }else if(algorithmPointer == 13){ // Manual Decision Algorithm with Binary Class Labels
+                    }else if(algorithmPointer == 14){ // Manual OneVsAll Algorithm
 
-                        DecisionTreeAlgorithmManual decisionTreeAlgorithmManual = new DecisionTreeAlgorithmManual();
-                        decisionTreeAlgorithmManual.applyDecisionTree(getInstance(), fileWithBinaryLabelsPath);
+                        OneVsAllClassifierManual oneVsAllClassifierManual = new OneVsAllClassifierManual(sparkBase);
+                        oneVsAllClassifierManual.applyOneVsAllClassifier(getInstance(), fileWithMultiClassLabelsPath, logFileName, sparseVectorProducerUtil.numOfVocab);
 
                     }
 
@@ -229,9 +235,19 @@ public class MainController implements Initializable {
                     String resultString = "Results:\n\nAlgorithm: " + selectAlgorithmComboBox.getSelectionModel().getSelectedItem().toString() +
                             "\nTest Method: " + (tenFold.isSelected() ? " 10-fold cross validations" : "Using test set") +
                             "\nTest Data Rate: " + getTestDataRate() + "\nTraining Data Rate: " + getTrainingDataRate() +
-                            "\nIteration Count: " + iterationCountValue + "\nMean of Accuracy: " + getAccuracy() + "\nMean of Precision: " + precision + "\nMean of Recall: " + getRecall() +
-                            "\nStandard Deviation for Accuracy: " + getSdAccuracy() + "\nStandard Deviation for Precision: " + getSdPrecision() +
-                            "\nStandard Deviation for Recall: " + getSdRecall();
+                            "\nIteration Count: " + iterationCountValue +
+                            "\nMean of Accuracy: %" +
+                            ((Double) (getAccuracy() * 100)).toString().substring(0, ((Double) (getAccuracy() * 100)).toString().length() > 6 ? 6 : ((Double) (getAccuracy() * 100)).toString().length()) +
+                            "\nMean of Precision: %" +
+                            ((Double) (getPrecision() * 100)).toString().substring(0, ((Double) (getPrecision() * 100)).toString().length() > 6 ? 6 : ((Double) (getPrecision() * 100)).toString().length()) +
+                            "\nMean of Recall: %" +
+                            ((Double) (getRecall() * 100)).toString().substring(0, ((Double) (getRecall() * 100)).toString().length() > 6 ? 6 : ((Double) (getRecall() * 100)).toString().length()) +
+                            "\nStandard Deviation for Accuracy: %" +
+                            ((Double) (getSdAccuracy() * 100)).toString().substring(0, ((Double) (getSdAccuracy() * 100)).toString().length() > 6 ? 6 : ((Double) (getSdAccuracy() * 100)).toString().length()) +
+                            "\nStandard Deviation for Precision: %" +
+                            ((Double) (getSdPrecision() * 100)).toString().substring(0, ((Double) (getSdPrecision() * 100)).toString().length() > 6 ? 6 : ((Double) (getSdPrecision() * 100)).toString().length()) +
+                            "\nStandard Deviation for Recall: %" +
+                            ((Double) (getSdRecall() * 100)).toString().substring(0, ((Double) (getSdRecall() * 100)).toString().length() > 6 ? 6 : ((Double) (getSdRecall() * 100)).toString().length());
                     resultLabel.setText(resultString);
                     System.out.println(resultString);
 
@@ -274,6 +290,7 @@ public class MainController implements Initializable {
                 }
             }
         });
+
     }
 
     public Integer getTestDataRate() {
