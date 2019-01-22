@@ -50,9 +50,12 @@ public class BaseAlgorithm {
         mainController.setPrecision(precisionList.contains(Double.NaN) ? 1 : precisionList.stream().mapToDouble(val -> val).average().orElse(0.0));
         mainController.setRecall(recallList.contains(Double.NaN) ? 1 : recallList.stream().mapToDouble(val -> val).average().orElse(0.0));
 
-        mainController.setSdAccuracy(accuracyList.contains(Double.NaN) ? 0 : mathUtil.getStandardDeviation(accuracyList, mainController.getAccuracy()));
-        mainController.setSdPrecision(precisionList.contains(Double.NaN) ? 0 : mathUtil.getStandardDeviation(precisionList, mainController.getPrecision()));
-        mainController.setSdRecall(recallList.contains(Double.NaN) ? 0 : mathUtil.getStandardDeviation(recallList, mainController.getRecall()));
+        mainController.setSdAccuracy(accuracyList.contains(Double.NaN) ? 0 : (Double.isNaN(mathUtil.getStandardDeviation(accuracyList, mainController.getAccuracy())) ? 0.0 :
+                mathUtil.getStandardDeviation(accuracyList, mainController.getAccuracy())));
+        mainController.setSdPrecision(precisionList.contains(Double.NaN) ? 0 : (Double.isNaN(mathUtil.getStandardDeviation(precisionList, mainController.getPrecision())) ? 0.0 :
+                mathUtil.getStandardDeviation(precisionList, mainController.getPrecision())));
+        mainController.setSdRecall(recallList.contains(Double.NaN) ? 0 : (Double.isNaN(mathUtil.getStandardDeviation(recallList, mainController.getRecall())) ? 0.0 :
+                mathUtil.getStandardDeviation(recallList, mainController.getRecall())));
     }
 
     public ArrayList<ArrayList<Line>> splitDateset(ArrayList<Line> dataset, Integer trainingRate, Integer testRate){

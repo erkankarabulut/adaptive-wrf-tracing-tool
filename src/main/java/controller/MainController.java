@@ -234,7 +234,7 @@ public class MainController implements Initializable {
                     System.out.println("Time to apply the algorithm: " + (System.currentTimeMillis() - start));
                     String resultString = "Results:\n\nAlgorithm: " + selectAlgorithmComboBox.getSelectionModel().getSelectedItem().toString() +
                             "\nTest Method: " + (tenFold.isSelected() ? " 10-fold cross validations" : "Using test set") +
-                            "\nTest Data Rate: " + getTestDataRate() + "\nTraining Data Rate: " + getTrainingDataRate() +
+                            (tenFold.isSelected() ? "" : "\nTest Data Rate: " + getTestDataRate() + "\nTraining Data Rate: " + getTrainingDataRate()) +
                             "\nIteration Count: " + iterationCountValue +
                             "\nMean of Accuracy: %" +
                             ((Double) (getAccuracy() * 100)).toString().substring(0, ((Double) (getAccuracy() * 100)).toString().length() > 6 ? 6 : ((Double) (getAccuracy() * 100)).toString().length()) +
@@ -242,11 +242,11 @@ public class MainController implements Initializable {
                             ((Double) (getPrecision() * 100)).toString().substring(0, ((Double) (getPrecision() * 100)).toString().length() > 6 ? 6 : ((Double) (getPrecision() * 100)).toString().length()) +
                             "\nMean of Recall: %" +
                             ((Double) (getRecall() * 100)).toString().substring(0, ((Double) (getRecall() * 100)).toString().length() > 6 ? 6 : ((Double) (getRecall() * 100)).toString().length()) +
-                            "\nStandard Deviation for Accuracy: %" +
+                            "\nStandard Deviation for Accuracy: " +
                             ((Double) (getSdAccuracy() * 100)).toString().substring(0, ((Double) (getSdAccuracy() * 100)).toString().length() > 6 ? 6 : ((Double) (getSdAccuracy() * 100)).toString().length()) +
-                            "\nStandard Deviation for Precision: %" +
+                            "\nStandard Deviation for Precision: " +
                             ((Double) (getSdPrecision() * 100)).toString().substring(0, ((Double) (getSdPrecision() * 100)).toString().length() > 6 ? 6 : ((Double) (getSdPrecision() * 100)).toString().length()) +
-                            "\nStandard Deviation for Recall: %" +
+                            "\nStandard Deviation for Recall: " +
                             ((Double) (getSdRecall() * 100)).toString().substring(0, ((Double) (getSdRecall() * 100)).toString().length() > 6 ? 6 : ((Double) (getSdRecall() * 100)).toString().length());
                     resultLabel.setText(resultString);
                     System.out.println(resultString);
