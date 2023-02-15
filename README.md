@@ -1,8 +1,8 @@
-# Adaptive Learning-based Tracing Tool for Weather Research and Forecasting Software (2019)
+# Adaptive Learning-based Tracing Tool for Weather Research and Forecasting Software (2018)
 
 This project includes the implementation of the concepts that I developed in the scope of my BSc. 
 thesis at the Software Quality R&D Lab, Yildiz Technical University, Istanbul. Please see the
-[thesis]() itself for more details.
+[thesis](https://github.com/erkankarabulut/adaptive-wrf-tracing-tool/blob/master/doc/Adaptive_Learning_Based_WRF_Tracing_Tool.pdf) itself for more details.
 
 ## Abstract 
 
